@@ -41,7 +41,7 @@ func _initialize() -> void:
 	p.face_point(Vector3(1.1, 1.4, -17.0))
 	await snap("e_ghost", 10)
 	# 河边
-	main._ending_outdoor()
+	main._finish_ending()
 	await snap("e_outdoor", 200)
 	p.cam.fov = 18.0
 	await snap("e_girl_zoom", 4)

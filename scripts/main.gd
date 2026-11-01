@@ -35,8 +35,12 @@ const EPILOGUE := [
 	"上游不再排放。河水一天天清了。\n全镇的头发,又掉了最后一次——然后,真的长回来了。",
 	"弟子1号带着完美生发剂,挨家挨户地送。\n这一次,一滴都没有排进河里。",
 	"清晨的河边,偶尔有人看见一个中年男人的影子,\n认真地摆正了一块牌子:\n“洗完澡,请清理水槽。”",
-	"至于那个小女孩——\n镇上关于她的传言,又多了好几个版本。\n她抛出去的那枚硬币,到现在,还在空中转着。",
+	"理发店把“帽子店”的招牌摘了下来。\n那个长胡子的小女孩,还是每天在河边抛她的硬币。",
+	"镇子,恢复了往日的平静。",
 ]
+
+## 收齐 5 封镇民来信时,尾声里多出的一页
+const LETTERS_EPILOGUE := "你把那封一直没人拆的信,还给了小女孩的妈妈。\n她看了很久,然后说:\n“那你能不能帮我跟镇上的人说一声——我们真的没抛过硬币。”"
 
 ## 开局自动弹出的水样检测报告(科普:为什么米诺地尔会同时导致长毛和脱发)
 const WATER_REPORT := [
@@ -46,7 +50,7 @@ const WATER_REPORT := [
 
 const DIARY := [
 	"[b]2023.11.20[/b]\n\nSarah 又发火了。\n她说我洗完澡从来不清理水槽,下水道这个月第三次被我的头发堵死了。\n她拎着一团湿漉漉的头发站在浴室门口:“你掉的头发,比你在这个家待的时间还多。”\n\n我说我会注意的。\n我没有。",
-	"[b]2024.1.3[/b]\n\nSarah 走了。冰箱上留了张字条:\n“下水道又堵了。我受够了。farewell。我要去和一个光头结婚。”\n\n十五年。原来十五年的婚姻,输给了一团头发。",
+	"[b]2024.1.3[/b]\n\nSarah 走了。冰箱上留了张字条:\n“下水道又堵了。我受够了。farewell。我要去和一个光头结婚。”\n\n十五年。原来十五年的婚姻,输给了一团头发。\n\n我把实验室的门锁密码,改成了今天。\n这样我每天进门,都得想一遍她是哪天走的。",
 	"[b]2024.8.3[/b]\n\n我查遍了文献,找到了它:米诺地尔。\n本来是降压药,病人吃了会长毛。多么优雅的副作用。\n\n只要改改配方、申请专利,我的头发和我的财富,就会一起蓬勃生长。\nSarah 会回来的。",
 	"[b]2025.3.14[/b]\n\n值得铭记的一天。第一版配方完成。诺贝尔奖,我来了。\nScrew you, Sarah.\n\n我在一个只要交钱就能发论文的网站上,认识了一个年轻人。他也秃,也焦虑,也被这个世界嫌弃。\n我叫他弟子1号。我们会一起证明:秃头,不是我们的错。",
 	"[b]2025.8.13[/b]\n\n不对劲。\n头发在长,可别的地方也在长。手背、后颈、耳朵里。今天早上,我的眉毛和鬓角连成了一片。\n弟子1号说这是“副作用”。不,这是嘲笑。\n\n停用一段时间吧。",
@@ -86,19 +90,20 @@ func _setup_env() -> void:
 	e.fog_enabled = true
 	e.fog_light_color = Color(0.04, 0.05, 0.05)
 	e.fog_density = 0.035
-	e.glow_enabled = true
+	e.glow_enabled = not OS.has_feature("web")     # 网页版(WebGL)上 Godot 4.3 的辉光会把画面整个搞坏,关掉
 	e.glow_intensity = 0.6
 	e.glow_bloom = 0.1
 	e.adjustment_enabled = true
 	e.adjustment_saturation = 0.82
 	e.adjustment_contrast = 1.1
-	e.ssao_enabled = true
+	e.ssao_enabled = not OS.has_feature("web")
 	we.environment = e
 	env = e
 	add_child(we)
 
 # ===================== 流程 =====================
 func to_title() -> void:
+	get_viewport().disable_3d = false
 	playing = false
 	get_tree().paused = false
 	SFX.loop("drone", false)
@@ -170,7 +175,9 @@ func new_game() -> void:
 	_build_world()
 	player.locked = true
 	SFX.loop("drone", true, -14.0)
+	get_viewport().disable_3d = true          # 序幕是全黑的文字画面:这时不渲染 3D 场景,打字不卡
 	UI.show_intro(INTRO, func():
+		get_viewport().disable_3d = false
 		GS.add_item("water_report")
 		_begin_play()
 		UI.open_reader("水样检测报告", WATER_REPORT))
@@ -446,94 +453,22 @@ func handover() -> void:
 	boss.walk_out(boss.exit_door)
 	await get_tree().create_timer(4.5).timeout
 	await UI.fade_to(1.0, 1.4)
-	_ending_outdoor()
+	_finish_ending()
 
-## 黎明的河边:小女孩、硬币、还没揭晓的答案
-func _ending_outdoor() -> void:
-	var o := Node3D.new()
-	o.position = Vector3(400, 0, 0)
-	world.add_child(o)
-	_apply_dawn_env()
-	player.flash.visible = false
-	var grass := Mats.solid(Color(0.22, 0.32, 0.16), 1.0)
-	WB.slab(o, Vector3(-40, -0.3, -50), Vector3(40, 0, 20), grass, true)
-	WB.slab(o, Vector3(-1.2, 0.0, -2), Vector3(1.2, 0.02, 20), Mats.solid(Color(0.45, 0.36, 0.25), 1.0), false)   # 小路
-	# 河
-	var water := StandardMaterial3D.new()
-	water.albedo_color = Color(0.25, 0.42, 0.62)
-	water.metallic = 0.5
-	water.roughness = 0.08
-	water.emission_enabled = true
-	water.emission = Color(0.9, 0.6, 0.4)
-	water.emission_energy_multiplier = 0.18
-	WB.slab(o, Vector3(-40, 0.0, -14), Vector3(40, 0.03, -6), water, false)
-	# 远处的小镇
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 8
-	for i in 16:
-		var hx := -30.0 + i * 4.0 + rng.randf_range(-1, 1)
-		var hw := rng.randf_range(2.5, 3.5)
-		var hh := rng.randf_range(2.5, 4.5)
-		WB.box(o, Vector3(hx, hh * 0.5, -22.0 - rng.randf() * 4.0), Vector3(hw, hh, 3.0), Mats.solid(Color(0.3, 0.26, 0.3), 1.0), false)
-		WB.box(o, Vector3(hx, hh + 0.6, -22.0), Vector3(hw * 0.9, 1.2, 2.6), Mats.solid(Color(0.22, 0.12, 0.12), 1.0), false)
-		if rng.randf() < 0.5:
-			WB.box(o, Vector3(hx, hh * 0.5, -20.45), Vector3(0.5, 0.6, 0.05), Mats.emissive(Color(1.0, 0.75, 0.35), 1.5), false)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-9, 25, 0)
-	sun.light_color = Color(1.0, 0.78, 0.55)
-	sun.light_energy = 1.35       # 1.8 时小女孩的脸会被照白,胡子看不清
-	sun.shadow_enabled = true
-	o.add_child(sun)
-	# 小女孩:矮个子、辫子、一撇小胡子,头顶抛着硬币
-	var hd := Person.build({
-		"slot": "girl", "female": true, "skin": Color(0.86, 0.7, 0.6), "cloth": "dress", "coat": Color(0.75, 0.3, 0.4), "pants": Color(0.75, 0.3, 0.4),
-		"hair": Color(0.18, 0.1, 0.05), "hair_style": "braids", "head_scale": 1.18, "arm_len": 0.88,
-		"head": {"width": 1.05, "height": 0.98}, "face": {"mustache": true, "blush": 0.4, "age": 0.0, "brow": Color(0.1, 0.06, 0.04)},
-	})
-	var girl: Node3D = hd["root"]
-	girl.scale = Vector3.ONE * 0.62
-	girl.position = Vector3(0, 0, 0)
-	girl.rotation_degrees.y = 180.0
-	o.add_child(girl)
-	hd["arm_r"].rotation.x = -2.9      # 举手抛币
-	hd["elbow_r"].rotation.x = -0.2
-	var coin := WB.cyl(o, Vector3(0.15, 1.9, 0.0), 0.085, 0.012, Mats.emissive(Color(1.0, 0.82, 0.25), 2.5), false)
-	coin.rotation_degrees.z = 90.0
-	var ct := coin.create_tween().set_loops()
-	ct.tween_property(coin, "position:y", 2.5, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	ct.tween_property(coin, "position:y", 1.9, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	var spin := coin.create_tween().set_loops()
-	spin.tween_property(coin, "rotation_degrees:y", 360.0, 0.45).from(0.0)
-	player.global_position = o.global_position + Vector3(0.2, 0, 4.4)
-	player.face_point(girl.global_position + Vector3(0.1, 0.95, 0))
-	player.cam.fov = 58.0
-	UI.set_cinematic(true, 0.01)
-	await UI.fade_to(0.0, 2.0)
-	await get_tree().create_timer(1.2).timeout
-	if Letters.all_collected():
-		# 收齐 5 封来信:把那封没拆的信还给母亲
-		await _say_wait([
-			"你把那封一直没人拆的信,还给了女孩的妈妈。",
-			"女孩的妈妈|……他一封都没看啊。",
-			"女孩的妈妈|那你能不能帮我跟镇上的人说一声:我们真的没抛过硬币。",
-			"Veronica|……我尽量。",
-		])
-	await _say_wait([
-		"清晨的河边。上游的排污口,终于不再往外冒黄水了。",
-		"一个扎着辫子的小女孩站在你面前。她的嘴唇上方,有一撇认真的小胡子。",
-		"小女孩|你就是那个调查员?",
-		"小女孩|镇上的人都说,我刚出生的时候,爸妈分不清我是男孩还是女孩,就抛硬币决定怎么养我。",
-		"小女孩|才不是呢。硬币是我自己的。",
-		"Veronica|……所以,你到底是男孩,还是女孩?",
-		"小女孩|(把硬币往天上一抛)你猜?",
-	])
-	await get_tree().create_timer(3.0).timeout
-	await UI.fade_to(1.0, 2.0)
+## 结局收尾:不再有河边的过场,直接进尾声字幕
+func _finish_ending() -> void:
 	GS.set_flag("game_completed")
 	playing = false
 	SFX.loop("drone", false)
 	UI.set_cinematic(false, 0.01)
-	UI.show_intro(EPILOGUE, func(): UI.show_the_end())
+	var pages: Array = EPILOGUE.duplicate()
+	if Letters.all_collected():
+		# 收齐 5 封镇民来信:多一页
+		pages.insert(pages.size() - 1, LETTERS_EPILOGUE)
+	get_viewport().disable_3d = true
+	UI.show_intro(pages, func():
+		get_viewport().disable_3d = false
+		UI.show_the_end())
 
 func _make_ghost() -> Node3D:
 	var hd := Person.build({

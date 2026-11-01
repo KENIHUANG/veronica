@@ -42,7 +42,7 @@ func _initialize() -> void:
 	await snap("v10_valve", Vector3(4.0, 0, -20.4), Vector3(5.8, 1.3, -21.2), 20)
 	await snap("v10_wigs", Vector3(-3.6, 0, -24.6), Vector3(-3.9, 1.62, -25.74), 12, 30.0)
 	await snap("v10_wigs_side", Vector3(-2.9, 0, -25.2), Vector3(-3.9, 1.62, -25.74), 12, 30.0)
-	main._ending_outdoor()
+	main._finish_ending()
 	for i in 200: await process_frame
 	for k in 4:
 		ui._advance_dialogue()

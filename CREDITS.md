@@ -17,3 +17,4 @@
 | assets/fonts/LongCang-Regular.ttf | Long Cang 龙藏体(中文手写字体) | Chen Xiaomin | SIL Open Font License 1.1,见 assets/fonts/LICENSES |
 | assets/fonts/AllertaStencil-Regular.ttf | Allerta Stencil(模板喷漆字体) | Matt McInerney | SIL Open Font License 1.1,见 assets/fonts/LICENSES |
 | assets/fonts/SpecialElite-Regular.ttf | Special Elite(打字机字体) | Astigmatic | Apache License 2.0,见 assets/fonts/LICENSES |
+| assets/fonts/ZCOOLQingKeHuangYou-Regular.ttf | 站酷庆科黄油体(中文招牌字体) | ZCOOL / 庆科 | SIL Open Font License 1.1,见 assets/fonts/LICENSES |

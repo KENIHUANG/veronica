@@ -116,6 +116,8 @@ func _initialize() -> void:
 		await create_timer(0.25).timeout
 		if ui.dlg_active:
 			seen[str(ui.dlg_text.text)] = true
+		if ui.intro_label != null:
+			seen[str(ui.intro_label.text)] = true
 		ui._advance_dialogue()
 		if ui.intro_ui != null:
 			ui._advance_intro()
@@ -125,7 +127,7 @@ func _initialize() -> void:
 			break
 	var mother := false
 	for k in seen.keys():
-		if "封都没看" in k or "never read a single one" in k: mother = true
-	print("mother scene shown: ", mother)
+		if "没人拆的信" in k or "unopened letter" in k: mother = true
+	print("letters epilogue shown: ", mother)
 	print("ending flag=", gs.has_flag("game_completed"), " end-screen=", ui.screen_kind)
 	quit()

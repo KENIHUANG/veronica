@@ -146,14 +146,22 @@ static func build(m, root: Node3D) -> void:
 	var ld := WB.door(root, Vector3(-1.0, 0, -12.1), 0.0, 90.0, 2.0, 2.4, Mats.get_mat("steel"))
 	var li = ld.add_inter(2.0, 2.4, "", Callable())
 	li.prompt_fn = func():
-		return "刷门禁卡" if GS.has_item("lab_keycard") else "读卡器(需要门禁卡)"
+		if GS.has_item("lab_keycard"):
+			return "输入门锁密码" if GS.has_flag("lab_card_ok") else "刷门禁卡"
+		return "读卡器(需要门禁卡)"
 	li.action = func():
 		if GS.has_item("lab_keycard"):
-			ld.set_open(true)
-			SFX.play("door")
-			li.enabled = false
-			GS.set_flag("lab_unlocked")
-			UI.toast("嘀。读卡器变绿了。一股冷气扑面而来。", 3.5)
+			# 读卡器只是第一道;门上还有博士自己装的日期密码锁(密码在日记 2024.1.3 那页)
+			SFX.play("click")
+			if not GS.has_flag("lab_card_ok"):
+				GS.set_flag("lab_card_ok")
+				UI.toast("嘀。读卡器变绿了。\n可门把手上,还挂着一把日期密码锁。", 4.0)
+			UI.open_date_lock("实验室门锁", ["20240103", "202413"], func():
+				ld.set_open(true)
+				SFX.play("door")
+				li.enabled = false
+				GS.set_flag("lab_unlocked")
+				UI.toast("咔哒。锁开了。一股冷气扑面而来。", 3.5), "博士会把门锁设成哪一天?也许他的日记里写着。")
 		else:
 			SFX.play("buzz")
 			UI.toast("读卡器闪着红灯。需要门禁卡。", 3.0)

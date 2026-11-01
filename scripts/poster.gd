@@ -15,6 +15,13 @@ func _ready() -> void:
 	_redraw()
 
 func _redraw() -> void:
+	var bt := TR.baked("poster_" + L.lang)
+	if bt != null:
+		if _mi != null:
+			_mi.queue_free()
+		_mi = TR.quad_tex(self, bt, width, false, 0.95)
+		(_mi.material_override as StandardMaterial3D).albedo_color = Color(0.7, 0.68, 0.64)
+		return
 	var W := 640
 	var H := 900
 	var root := Control.new()
@@ -58,6 +65,7 @@ func _redraw() -> void:
 		return
 	_vandalize(img)
 	_age(img)
+	TR.save_baked("poster_" + L.lang, img)
 	if _mi != null:
 		_mi.queue_free()
 	_mi = TR.quad(self, img, width, false, 0.95)

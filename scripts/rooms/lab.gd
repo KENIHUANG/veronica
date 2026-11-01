@@ -138,7 +138,7 @@ static func build(m, root: Node3D) -> void:
 	_build_cabinet(m, root, steel)
 	_build_valve(m, root, steel)
 	# 墙上的警示
-	PT.make(root, Vector3(0, 2.45, -25.94), 0.0, "危险 / 化学品 / 生物样本", "stencil", 2.6, Color(0.62, 0.08, 0.06), "stencil", 78, 0.16)
+	PT.make(root, Vector3(0, 2.45, -25.94), 0.0, "危险 / 化学品 / 生物样本", "stencil", 2.8, Color(0.62, 0.08, 0.06), "stencil", 104, 0.19)
 	# 地上的污渍
 	var blood := StandardMaterial3D.new()
 	blood.albedo_color = Color(0.3, 0.05, 0.04, 0.7)
@@ -188,9 +188,15 @@ static func _build_locker(m, root: Node3D, c: float) -> void:
 	WB.slab(root, Vector3(-5.95, 0, c + 0.4), Vector3(-5.15, 2.05, c + 0.45), mt, false)
 	WB.slab(root, Vector3(-5.95, 2.0, c - 0.45), Vector3(-5.15, 2.05, c + 0.45), mt, false)
 	WB.slab(root, Vector3(-5.95, 0, c - 0.45), Vector3(-5.15, 0.05, c + 0.45), mt, false)
+	# 门框:两根立柱 + 上下横档,把百叶的两端包住(之前百叶伸进侧板、还凸出前沿 1 厘米,斜着看会穿模)
+	var fr := Mats.solid(Color(0.26, 0.31, 0.29), 0.5, 0.5)
+	WB.slab(root, Vector3(-5.2, 0, c - 0.45), Vector3(-5.11, 2.05, c - 0.37), fr, false)
+	WB.slab(root, Vector3(-5.2, 0, c + 0.37), Vector3(-5.11, 2.05, c + 0.45), fr, false)
+	WB.slab(root, Vector3(-5.2, 1.93, c - 0.37), Vector3(-5.11, 2.05, c + 0.37), fr, false)
+	WB.slab(root, Vector3(-5.2, 0.0, c - 0.37), Vector3(-5.11, 0.1, c + 0.37), fr, false)
 	for i in 5:
-		var y0 := 0.12 + i * 0.38
-		WB.slab(root, Vector3(-5.18, y0, c - 0.42), Vector3(-5.14, y0 + 0.24, c + 0.42), mt, false)
+		var y0 := 0.14 + i * 0.36
+		WB.slab(root, Vector3(-5.19, y0, c - 0.37), Vector3(-5.15, y0 + 0.22, c + 0.37), mt, false)
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
 	sb.collision_mask = 0

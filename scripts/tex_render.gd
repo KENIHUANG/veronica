@@ -4,6 +4,41 @@ extends RefCounted
 
 static var _fonts: Dictionary = {}
 
+const BAKED_DIR := "res://assets/baked/"
+
+## 预渲染缓存:墙上的字、海报、血字都很费时(逐像素处理),
+## 所以提前渲染成 PNG 放在 assets/baked/,运行时直接读,开局不卡。
+## 重新生成:BAKE_TEX=1 godot --path . -s tools/bake_textures.gd
+static func baked(key: String) -> Texture2D:
+	if OS.get_environment("BAKE_TEX") == "1":
+		return null
+	var p := BAKED_DIR + key + ".png"
+	if ResourceLoader.exists(p):
+		return load(p)
+	return null
+
+static func save_baked(key: String, img: Image) -> void:
+	if OS.get_environment("BAKE_TEX") != "1":
+		return
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(BAKED_DIR))
+	img.save_png(ProjectSettings.globalize_path(BAKED_DIR + key + ".png"))
+
+static func quad_tex(parent: Node3D, tex: Texture2D, width: float, alpha: bool = true, rough: float = 0.9) -> MeshInstance3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = tex
+	if alpha:
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+		m.alpha_scissor_threshold = 0.3
+	m.roughness = rough
+	m.metallic_specular = 0.2
+	var qm := QuadMesh.new()
+	qm.size = Vector2(width, width * tex.get_height() / tex.get_width())
+	var mi := MeshInstance3D.new()
+	mi.mesh = qm
+	mi.material_override = m
+	parent.add_child(mi)
+	return mi
+
 ## kind: "stencil" 模板喷漆 / "typewriter" 打字机 / "hand" 手写 / "bold" 粗黑体
 static func font(kind: String) -> Font:
 	if _fonts.has(kind):
@@ -11,15 +46,18 @@ static func font(kind: String) -> Font:
 	var cjk := SystemFont.new()
 	cjk.font_names = PackedStringArray(["Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei", "Heiti SC", "sans-serif"])
 	cjk.font_weight = 800
+	var noto: FontFile = load("res://assets/fonts/NotoSansSC-Game.ttf")    # 网页版没有系统字体,靠它兜底
 	var f: Font
 	match kind:
 		"stencil":
+			# 拉丁字母:Allerta Stencil 模板字;中文:站酷庆科黄油体(粗壮的招牌字,和模板字气质接近)
 			var ff: FontFile = load("res://assets/fonts/AllertaStencil-Regular.ttf").duplicate()
-			ff.fallbacks = [cjk]
+			var qk: FontFile = load("res://assets/fonts/ZCOOLQingKeHuangYou-Regular.ttf")
+			ff.fallbacks = [qk, cjk, noto]
 			f = ff
 		"typewriter":
 			var ff2: FontFile = load("res://assets/fonts/SpecialElite-Regular.ttf").duplicate()
-			ff2.fallbacks = [cjk]
+			ff2.fallbacks = [cjk, noto]
 			f = ff2
 		"hand":
 			f = preload("res://scripts/handwriting.gd").font()

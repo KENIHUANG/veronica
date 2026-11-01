@@ -119,9 +119,11 @@ func objective() -> String:
 	if has_flag("lab_unlocked"):
 		return "进入实验室,查明真相。"
 	if has_flag("safe_opened"):
-		return "用门禁卡打开走廊尽头的实验室。"
+		return "打开走廊尽头的实验室。门上还有一把日期密码锁——日记里也许有答案。"
 	if has_flag("office_unlocked"):
 		return "调查博士的办公室。保险箱的密码在哪?"
+	if has_flag("got_lab_keycard") and has_flag("lab_card_ok") and not has_flag("office_unlocked"):
+		return "实验室的门锁还需要密码。去博士的办公室找找——钥匙也许在厕所里。"
 	if has_flag("got_lab_keycard"):
 		return "找到办公室的钥匙。厕所里也许有线索。"
 	if has_flag("statue_defeated"):

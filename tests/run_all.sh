@@ -29,6 +29,7 @@ check loc_touch "restroom door opened by touch: true"
 check letters   "letters fails: 0"
 check valve     "valve fails: 0"
 check hide      "hide fails: 0"
+check labdoor   "labdoor fails: 0"
 
 if [ "${SHOTS:-0}" = "1" ]; then
 	export SHOT_DIR="${SHOT_DIR:-$PWD/_shots}"; mkdir -p "$SHOT_DIR"

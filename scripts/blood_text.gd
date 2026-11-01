@@ -4,6 +4,7 @@ extends Node3D
 ## 平面朝向本地 +Z(和 QuadMesh 一样),width 为世界宽度(米)。
 
 const HW = preload("res://scripts/handwriting.gd")
+const TR = preload("res://scripts/tex_render.gd")
 
 @export var text := "HE IS STILL\nIN HERE."
 @export var width := 1.6
@@ -17,6 +18,11 @@ func _ready() -> void:
 	_render()
 
 func _render() -> void:
+	var key := "blood_" + text.md5_text().substr(0, 10)
+	var bt := TR.baked(key)
+	if bt != null:
+		_apply(bt)
+		return
 	if DisplayServer.get_name() == "headless":
 		return      # 无头模式(自动测试)没有真实渲染器
 	var vp := SubViewport.new()
@@ -45,9 +51,13 @@ func _render() -> void:
 		return      # 无头模式(测试)下没有真实渲染,跳过
 	img.convert(Image.FORMAT_RGBA8)
 	_bloodify(img)
+	TR.save_baked(key, img)
 	img.generate_mipmaps()
+	_apply(ImageTexture.create_from_image(img))
+
+func _apply(tex: Texture2D) -> void:
 	var m := StandardMaterial3D.new()
-	m.albedo_texture = ImageTexture.create_from_image(img)
+	m.albedo_texture = tex
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	m.alpha_scissor_threshold = 0.25
 	m.roughness = 0.95
@@ -55,7 +65,7 @@ func _render() -> void:
 	m.albedo_color = Color(0.75, 0.7, 0.7)     # 隔间顶上有灯,压暗免得血被照成粉色
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	var qm := QuadMesh.new()
-	qm.size = Vector2(width, width * img.get_height() / img.get_width())
+	qm.size = Vector2(width, width * tex.get_height() / tex.get_width())
 	quad.mesh = qm
 	quad.material_override = m
 

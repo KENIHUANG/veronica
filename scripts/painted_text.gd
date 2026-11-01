@@ -21,7 +21,16 @@ func _ready() -> void:
 	L.changed.connect(_redraw)
 	_redraw()
 
+func _key() -> String:
+	return "pt_%s_%s" % [("%s|%s|%s|%s|%d|%.3f|%d" % [text, style, color.to_html(), font_kind, px, aspect, seed_v]).md5_text().substr(0, 10), L.lang]
+
 func _redraw() -> void:
+	var bt := TR.baked(_key())
+	if bt != null:
+		if _mi != null:
+			_mi.queue_free()
+		_mi = TR.quad_tex(self, bt, width, style != "plate", 0.85)
+		return
 	var w := 1024
 	var h := int(w * aspect)
 	var root := Control.new()
@@ -47,6 +56,7 @@ func _redraw() -> void:
 		_rust(img)
 	else:
 		TR.weather(img, seed_v, 0.33, 0.3)
+	TR.save_baked(_key(), img)
 	if _mi != null:
 		_mi.queue_free()
 	_mi = TR.quad(self, img, width, style != "plate", 0.85)

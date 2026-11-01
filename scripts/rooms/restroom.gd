@@ -224,11 +224,17 @@ static func _build_closet(m, root: Node3D) -> void:
 	WB.slab(root, Vector3(x0 - 0.05, 0, 7.15), Vector3(x0, 2.1, 8.0), mt, false)    # 左侧板
 	WB.slab(root, Vector3(x1, 0, 7.15), Vector3(x1 + 0.05, 2.1, 8.0), mt, false)    # 右侧板
 	WB.slab(root, Vector3(x0 - 0.05, 2.05, 7.15), Vector3(x1 + 0.05, 2.1, 8.0), mt, false)
-	for i in 5:                                                                       # 百叶门:能从缝里往外看
-		var y0 := 0.12 + i * 0.4
-		WB.slab(root, Vector3(x0, y0, 7.15), Vector3(x1, y0 + 0.26, 7.19), mt, false)
-	WB.slab(root, Vector3(6.95, 0.95, 7.1), Vector3(7.0, 1.1, 7.14), Props.chrome(), false)   # 把手
-	PT.make(root, Vector3(6.65, 1.9, 7.13), 180.0, "清洁工具", "stencil", 0.5, Color(0.85, 0.82, 0.7), "stencil", 120, 0.25)
+	# 门框(包住百叶两端,避免穿模)+ 百叶门:能从缝里往外看
+	var fr := Mats.solid(Color(0.27, 0.31, 0.26), 0.55, 0.45)
+	WB.slab(root, Vector3(x0 - 0.05, 0, 7.11), Vector3(x0 + 0.05, 2.1, 7.2), fr, false)
+	WB.slab(root, Vector3(x1 - 0.05, 0, 7.11), Vector3(x1 + 0.05, 2.1, 7.2), fr, false)
+	WB.slab(root, Vector3(x0 + 0.05, 1.98, 7.11), Vector3(x1 - 0.05, 2.1, 7.2), fr, false)
+	WB.slab(root, Vector3(x0 + 0.05, 0, 7.11), Vector3(x1 - 0.05, 0.1, 7.2), fr, false)
+	for i in 5:
+		var y0 := 0.14 + i * 0.37
+		WB.slab(root, Vector3(x0 + 0.05, y0, 7.14), Vector3(x1 - 0.05, y0 + 0.24, 7.18), mt, false)
+	WB.slab(root, Vector3(6.92, 0.95, 7.07), Vector3(6.97, 1.1, 7.11), Props.chrome(), false)   # 把手
+	PT.make(root, Vector3(6.65, 2.04, 7.105), 180.0, "清洁工具", "stencil", 0.5, Color(0.85, 0.82, 0.7), "stencil", 120, 0.25)
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
 	sb.collision_mask = 0

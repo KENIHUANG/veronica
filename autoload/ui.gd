@@ -33,7 +33,7 @@ var qte_label: Label
 
 var modal: Control = null
 var modal_on_close := Callable()
-const GAME_VERSION := "v11.1"
+const GAME_VERSION := "v12.1"
 var letters_label: Label = null
 var title_ui: Control = null
 var screen_ui: Control = null
@@ -612,9 +612,15 @@ func open_reader(title: String, pages: Array, on_close: Callable = Callable()) -
 
 # ---- 保险箱 ----
 func open_safe(on_success: Callable) -> void:
-	var vb := _open_modal("保险箱", Vector2(460, 270))
+	open_date_lock("保险箱", ["20210203", "202123"], on_success)
+
+## 日期密码锁。codes:接受的数字串(去掉点号后)。hint:错误时给的提示(可空)。
+var lock_edit: LineEdit = null        # 测试用
+func open_date_lock(title: String, codes: Array, on_success: Callable, hint: String = "") -> void:
+	var vb := _open_modal(title, Vector2(460, 290))
 	vb.add_child(_label("请输入日期密码:", 18))
 	var le := LineEdit.new()
+	lock_edit = le
 	le.max_length = 12
 	le.placeholder_text = L.t("例如 2000.1.1")
 	le.custom_minimum_size = Vector2(0, 40)
@@ -626,12 +632,12 @@ func open_safe(on_success: Callable) -> void:
 		for ch in le.text:
 			if ch >= "0" and ch <= "9":
 				digits += ch
-		if digits == "20210203" or digits == "202123":
+		if digits in codes:
 			close_modal()
 			on_success.call()
 		else:
 			SFX.play("buzz")
-			fb.text = L.t("嘀——错误。")
+			fb.text = L.t("嘀——错误。") + ("" if hint == "" else "\n" + L.t(hint))
 			le.text = ""
 	le.text_submitted.connect(submit)
 	vb.add_child(_button("确认", func(): submit.call()))
@@ -875,7 +881,8 @@ func show_title(has_save: bool) -> void:
 	vb.add_child(_button("语言 / Language: " + ("中文" if L.lang == "zh" else "English"), func(): L.toggle_lang()))
 	vb.add_child(_button("手机触控:开" if Touch.enabled else "手机触控:关", func(): Touch.toggle()))
 	vb.add_child(_button("操作说明", func(): open_reader("操作说明", [CONTROLS])))
-	vb.add_child(_button("退出", func(): get_tree().quit()))
+	if not OS.has_feature("web"):          # 网页版里"退出"没有意义(关掉标签页即可)
+		vb.add_child(_button("退出", func(): get_tree().quit()))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 const CONTROLS := "[b]移动[/b]  W A S D\n[b]奔跑[/b]  按住 Shift(会发出声音)\n[b]视角[/b]  鼠标\n[b]互动[/b]  E\n[b]手电筒[/b]  F\n[b]背包[/b]  Tab\n[b]使用喷雾恢复[/b]  H\n[b]扣动空枪制造声响[/b]  Q\n[b]暂停[/b]  Esc\n\n[b]躲藏[/b]:靠近储物柜按 E 躲进去,再按 E 出来。\n怪物看不见躲起来的你,但听得到你奔跑的声音。\n\n[b]触屏[/b]:左半屏拖动 = 摇杆移动;右半屏拖动 = 转视角;右下角红色大按钮 = 互动;上方小按钮 = 暂停 / 物品 / 手电 / 喷雾 / 空枪。"
