@@ -168,6 +168,10 @@ func _build_world() -> void:
 	if GS.has_flag("boss_intro_done") and not GS.has_flag("game_completed"):
 		boss.spawn_at(Vector3(0, 0, -14.5))
 		boss.begin_patrol()
+	if OS.has_feature("web") or OS.get_environment("WEB_CULL") == "1":
+		var wc := preload("res://scripts/web_cull.gd").new()
+		world.add_child(wc)
+		wc.setup(world, player)
 
 func new_game() -> void:
 	GS.reset()

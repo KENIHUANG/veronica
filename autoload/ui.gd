@@ -33,7 +33,7 @@ var qte_label: Label
 
 var modal: Control = null
 var modal_on_close := Callable()
-const GAME_VERSION := "v12.1"
+const GAME_VERSION := "v12.3"
 var letters_label: Label = null
 var title_ui: Control = null
 var screen_ui: Control = null
