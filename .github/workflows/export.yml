@@ -1,6 +1,6 @@
 # 自动导出网页版(发布到 GitHub Pages)+ Windows/Linux 构建(作为 Artifact 下载)
-# 使用前:在 Godot 编辑器里 项目 → 导出,添加 3 个预设并命名为 "Web" / "Windows Desktop" / "Linux",
-# Web 预设里把 "Thread Support"(线程支持)关掉;保存后把生成的 export_presets.cfg 提交到仓库。
+# 导出预设在仓库根目录的 export_presets.cfg(Web 已关闭线程支持,适合 GitHub Pages)。
+# 第一次使用:仓库 Settings → Pages → Source 选 "GitHub Actions"。
 name: export
 on:
   push:
@@ -21,8 +21,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup templates
         run: |
+          # 镜像里的 GODOT_VERSION 变量可能为空,直接找模板目录
           mkdir -v -p ~/.local/share/godot/export_templates/
-          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          src=$(ls -d /root/.local/share/godot/export_templates/*stable* 2>/dev/null | head -1)
+          if [ -z "$src" ]; then src=$(find / -type d -path "*export_templates/*stable*" -prune 2>/dev/null | head -1); fi
+          echo "templates found at: $src"
+          dst=~/.local/share/godot/export_templates/4.3.stable
+          if [ "$(realpath "$src")" != "$(realpath -m "$dst")" ]; then cp -r "$src" "$dst"; fi
+          ls "$dst" | head
+      - name: Import assets
+        run: |
+          # 新克隆的项目第一次导入时,字体资源可能还没导入完,导两次
+          godot --headless --import || true
+          godot --headless --import || true
       - name: Export Web
         run: |
           mkdir -v -p build/web
