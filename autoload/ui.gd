@@ -33,7 +33,7 @@ var qte_label: Label
 
 var modal: Control = null
 var modal_on_close := Callable()
-const GAME_VERSION := "v12.3"
+const GAME_VERSION := "v12.4"
 var letters_label: Label = null
 var title_ui: Control = null
 var screen_ui: Control = null
@@ -415,6 +415,9 @@ func _qte_press() -> void:
 		_qte_ok.call()
 
 func _process(delta: float) -> void:
+	# 网页版:浏览器锁定鼠标是异步的,可能在窗口打开之后才生效 → 有窗口时强制显示鼠标
+	if modal != null and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if _typing:
 		_chars += delta * 48.0
 		dlg_text.visible_characters = int(_chars)
@@ -510,14 +513,15 @@ func _open_modal(title: String, min_size: Vector2 = Vector2(760, 470)) -> VBoxCo
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	return vb
 
-func close_modal() -> void:
+## recapture=false:马上要打开下一个窗口时用,避免网页版"刚锁定鼠标又解锁"导致鼠标消失
+func close_modal(recapture: bool = true) -> void:
 	if modal == null:
 		return
 	modal.queue_free()
 	modal = null
 	var cb := modal_on_close
 	modal_on_close = Callable()
-	if hud_on and title_ui == null and screen_ui == null:
+	if recapture and hud_on and title_ui == null and screen_ui == null:
 		capture_mouse()
 	modal_closed.emit()
 	if cb.is_valid():
@@ -566,8 +570,10 @@ func open_inventory(on_use: Callable) -> void:
 	btn.pressed.connect(func():
 		if sel["i"] >= 0:
 			var id: String = ids[sel["i"]]
-			close_modal()
+			close_modal(false)
 			on_use.call(id)
+			if modal == null and not blocked():
+				capture_mouse()
 	)
 	if not ids.is_empty():
 		list.select(0)
