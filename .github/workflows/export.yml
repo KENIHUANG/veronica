@@ -1,0 +1,52 @@
+# 自动导出网页版(发布到 GitHub Pages)+ Windows/Linux 构建(作为 Artifact 下载)
+# 使用前:在 Godot 编辑器里 项目 → 导出,添加 3 个预设并命名为 "Web" / "Windows Desktop" / "Linux",
+# Web 预设里把 "Thread Support"(线程支持)关掉;保存后把生成的 export_presets.cfg 提交到仓库。
+name: export
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup templates
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+      - name: Export Web
+        run: |
+          mkdir -v -p build/web
+          godot --headless --verbose --export-release "Web" build/web/index.html
+      - name: Export Windows
+        run: |
+          mkdir -v -p build/windows
+          godot --headless --verbose --export-release "Windows Desktop" build/windows/veronica.exe
+      - name: Export Linux
+        run: |
+          mkdir -v -p build/linux
+          godot --headless --verbose --export-release "Linux" build/linux/veronica.x86_64
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: build/windows }
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: build/linux }
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: build/web }
+  deploy:
+    needs: export
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,16 @@
+# Godot
+.godot/
+*.translation
+.import/
+export.cfg
+export_credentials.cfg
+# 构建产物
+build/
+*.apk
+*.aab
+*.exe
+*.pck
+*.zip
+# 系统
+.DS_Store
+Thumbs.db
